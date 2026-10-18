@@ -1,10 +1,35 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+import os
 
 app = FastAPI(title="Cerebro Central IA - Omnicanal")
+
+# Token de Telegram configurado en las variables de entorno de Render
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "TOKEN_PENDIENTE")
 
 @app.get("/")
 def inicio():
     return {"estado": "El cerebro de la IA está activo y funcionando 24/7, señor"}
+
+@app.post("/webhook/telegram")
+async def recibir_mensaje_telegram(req: Request):
+    datos = await req.json()
+    
+    # Extraemos el mensaje enviado desde Telegram
+    try:
+        mensaje_texto = datos["message"]["text"]
+        chat_id = datos["message"]["chat"]["id"]
+        nombre_usuario = datos["message"]["from"].get("first_name", "Señor")
+    except Exception:
+        return {"status": "ignorado"}
+
+    # Aquí es donde el cerebro procesa la orden
+    respuesta_ia = f"Hola {nombre_usuario}, he recibido tu mensaje en el servidor de la nube: '{mensaje_texto}'. ¡Todo bajo control, señor!"
+
+    return {
+        "method": "sendMessage",
+        "chat_id": chat_id,
+        "text": respuesta_ia
+    }
 
 @app.post("/controlar")
 async def ejecutar_comando_fisico(datos: dict):
